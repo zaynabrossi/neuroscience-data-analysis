@@ -15,3 +15,6 @@ this repository documents my development of independent python programming and s
 
 ## data + academic integrity
 this projects uses independently developed code and synthetic datasets (no confidential research data from my, or other, thesis projects).
+
+## status
+[in progress]
