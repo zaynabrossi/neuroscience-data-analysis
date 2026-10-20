@@ -1,4 +1,7 @@
+from pathlib import Path
 import csv
+project_folder = Path(__file__).resolve().parent.parent
+output_file = project_folder/"data"/"synthetic_trials.csv"
 import random
 random.seed(42)
 
@@ -33,7 +36,7 @@ print(trials[3])
 print(trials[6])
       
 fieldnames = ["participant_id", "trial", "condition", "rt_ms", "correct"]
-with open("data/synthetic_trials.csv", "w", newline="") as file:
+with open(output_file, "w", newline="") as file:
   writer = csv.DictWriter(file, fieldnames=fieldnames)
   writer.writeheader()
   writer.writerows(trials)
