@@ -55,3 +55,16 @@ this projects uses independently developed code and synthetic datasets (no confi
 [in progress]
 
 future development will refine data validation + introduce preprocessing, effect-size estimation, CI's, and more advanced visualization methods
+
+## running the project
+
+install required libraries:
+
+  python3 -m pip install -r requirements.txt
+
+run scripts in this order:
+
+1. `python3 src/generate_data.py`
+2. `python3 src/analyze_rt.py`
+
+1 = generate synthetic dataset, 2 = do statistical analyses + save plot in `figures/`
