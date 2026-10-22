@@ -67,7 +67,7 @@ this project uses independently developed code and synthetic datasets (no confid
 ## status
 [in progress]
 
-future development will introduce effect-size estimation, CI's, and additional visualization methods
+future development will introduce larger dataset iterations + additional visualization methods
 
 ## running the project
 
