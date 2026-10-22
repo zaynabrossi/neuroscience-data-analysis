@@ -15,6 +15,8 @@ figure_file = figures_folder/"paired_rt_plot.png"
 df = pd.read_csv(csv_file)
 
 # Inspect + report data quality
+print("Number of missing values per column:")
+print("-"*35)
 print(df.isna().sum())
 
 incorrect_trials = df[df["correct"]==0]
