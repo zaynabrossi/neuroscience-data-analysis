@@ -38,6 +38,8 @@ the following analyses were performed using pandas, NumPy, and SciPy:
 
 -manual verification of stats against SciPy implementation
 
+-Cohen's d effect size + 95% CI limits
+
 ## visualization
 a paired-line plot illustrating each participants' mean reaction times (in ms) across the two cognitive-load conditions was generated using Matplotlib
 
@@ -65,7 +67,7 @@ results are purely illustrative! the concluded effect was intentionally built in
 this project uses independently developed code and synthetic datasets (no confidential research data from my, or other, thesis projects).
 
 ## status
-[in progress]
+[complete]
 
 future development will introduce larger dataset iterations + additional visualization methods
 
@@ -80,4 +82,4 @@ run scripts in this order:
 1. `python3 src/generate_data.py`
 2. `python3 src/analyze_rt.py`
 
-1 = generate synthetic dataset and saves to data/synthetic_trials.csv, 2 = do statistical analyses + save plot in `figures/`
+1 = generate synthetic dataset and saves to `data/synthetic_trials.csv`, 2 = do statistical analyses + save plot in `figures/`
