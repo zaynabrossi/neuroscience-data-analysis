@@ -41,7 +41,7 @@ the following analyses were performed using pandas, NumPy, and SciPy:
 ## visualization
 a paired-line plot illustrating each participants' mean reaction times (in ms) across the two cognitive-load conditions was generated using Matplotlib
 
-![Participant-level reaction times in ms under low and high cog load] (figures/paired_rt_plot.png)
+![Paired RT plot](figures/paired_rt_plot.png)
 
 ## simulated results
 after simulating a differential effect between high-load and low-load reaction times, resulting synthetic data show higher mean reaction times under high cognitive load with an average within-participant difference of approx. 212 ms. a paired-samples t-test returned a p-value of approx. 0.006, with t(2) = 12.692.
