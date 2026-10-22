@@ -14,20 +14,147 @@ figure_file = figures_folder/"paired_rt_plot.png"
 # Load synthetic data        
 df = pd.read_csv(csv_file)
 
+# Inspect + report data quality
+print(df.isna().sum())
+
+incorrect_trials = df[df["correct"]==0]
+print("Number of incorrect trials:", len(incorrect_trials))
+
+correct_trials = df[df["correct"]==1]
+print("Number of correct trials:", len(correct_trials))
+
+total_trials = len(df)
+n_correct = len(correct_trials)
+
+accuracy_percentage = (n_correct / total_trials)*100
+print("Accuracy:", round(accuracy_percentage,2), "%")
+
+mean_correct_rt = correct_trials["rt_ms"].mean()
+print(" Raw mean RT on correct trials:", round(mean_correct_rt, 2), "ms")
+
+fast_trials = df[df["rt_ms"] < 200]
+print("Number of unusually fast trials:", len(fast_trials))
+
+slow_trials = df[df["rt_ms"] > 1000]
+print("Number of unusually slow trials:", len(slow_trials))
+
+# Preprocess trials
+working_df = df.copy()
+
+working_df["valid_rt"] = (
+    (working_df["rt_ms"] >=200) &
+    (working_df["rt_ms"] <=1000)
+)
+
+clean_df = working_df[working_df["valid_rt"] == True].copy()
+
+analysis_df = working_df[
+    (working_df["valid_rt"]==True) &
+    (working_df["correct"]==1)
+].copy()
+print("Trials retained for analysis:", len(analysis_df))
+
+
+# Summarize preprocessing quality
+valid_trials_by_condition = working_df.groupby("condition")["valid_rt"].sum()
+print(valid_trials_by_condition)
+
+invalid_trials_by_condition = working_df.groupby("condition")["valid_rt"].apply(
+    lambda x: (~x).sum())
+print("Invalid trials by condition:", invalid_trials_by_condition)
+
+valid_trials_by_participant = working_df.groupby("participant_id")["valid_rt"].sum()
+print(valid_trials_by_participant)
+
+valid_trials_by_participant_x_condition= working_df.groupby(
+    ["participant_id", "condition"]
+)["valid_rt"].sum()
+print(valid_trials_by_participant_x_condition)
+
+mean_rt_by_ptcp_x_cond = clean_df.groupby(
+    ["participant_id", "condition"]
+)["rt_ms"].mean()
+print("Mean RT by participant x condition:", round(mean_rt_by_ptcp_x_cond,2), "ms")
+
+
+# Report exclusions for transparency
+n_original= len(working_df)
+n_analysis = len(analysis_df)
+n_removed = n_original - n_analysis
+retention_rate = (n_analysis/n_original)*100
+print("OG trials:", n_original)
+print("Trials retained:", n_analysis)
+print("Trials removed:", n_removed)
+print("Retention rate:", round(retention_rate,2), "%")
+
+double_exclusions = working_df[
+    (working_df["valid_rt"]==False)&
+    (working_df["correct"]==0)
+]
+print("Trials failing both criteria:", len(double_exclusions))
+
+n_invalid_rt = len(working_df) - working_df["valid_rt"].sum()
+n_incorrect = len(working_df[working_df["correct"]==0])
+n_overlap = len(double_exclusions)
+calculated_exclusions = (n_invalid_rt + n_incorrect) - n_overlap
+print("Calculated exclusions:", calculated_exclusions)
+print("Actual exclusions:", n_removed)
+
+assert calculated_exclusions == n_removed #double-checking measure
+
+# Check ptcp eligibility
+trials_per_group = analysis_df.groupby(
+    ["participant_id", "condition"]
+).size()
+print(trials_per_group)
+
+trial_count_table = trials_per_group.unstack().reindex(
+index=df["participant_id"].unique(),
+    columns=["low", "high"]
+)
+print(trial_count_table)
+
+print(trial_count_table.isna())
+missing_conditions = trial_count_table.isna().sum()
+print(missing_conditions)
+
+missing_per_ptcp= trial_count_table.isna().sum(axis=1)
+eligible_ptcps = missing_per_ptcp[
+    missing_per_ptcp == 0
+]
+print(eligible_ptcps)
+
+eligible_ids = eligible_ptcps.index
+print(eligible_ids)
+
+paired_df = analysis_df[
+    analysis_df["participant_id"].isin(eligible_ids)
+].copy()
+print("Trials from eligible participants:", len(paired_df))
+
+# Calculate ptcp-level cog-load effects
+paired_means = paired_df.groupby(
+    ["participant_id", "condition"]
+)["rt_ms"].mean()
+print(paired_means)
+
+wide_paired_means = paired_means.unstack()
+print(wide_paired_means)
+
+paired_differences = wide_paired_means["high"] - wide_paired_means["low"]
+print("Participant-level RT differences:")
+print(paired_differences)
+
+                                       
 # Calculate + display descriptive stats
-mean_rt = df["rt_ms"].mean()
+mean_rt = paired_df["rt_ms"].mean()
 print("Overall mean RT:", round(mean_rt,2), "ms")
 
-mean_accuracy = df["correct"].mean()
-
-accuracy_percent = mean_accuracy * 100
-print("Overall accuracy:", round(accuracy_percent,2), "%")
-
-high_trials = df[df["condition"] == "high"]
+high_trials = paired_df[paired_df["condition"] == "high"]
 mean_high_rt = high_trials["rt_ms"].mean()
 print("Mean high-load RT:", (round(mean_high_rt,2)), "ms")
 
-low_trials = df[df["condition"] == "low"]
+low_trials = paired_df[paired_df["condition"] == "low"]
 mean_low_rt = low_trials["rt_ms"].mean()
 print("Mean low-load RT:", round(mean_low_rt,2), "ms")
 
@@ -43,61 +170,53 @@ else:
 mean_accuracy_by_condition = df.groupby("condition")["correct"].mean()
 print(mean_accuracy_by_condition)
 
-# Calculate participant-level rt's
-participant_means = df.groupby(["participant_id", "condition"])["rt_ms"].mean().reset_index()
-
-
-participant_means = participant_means.rename(columns={"rt_ms": "mean_rt_ms"})
-print(participant_means)
-
-wide_means = participant_means.pivot(
-    index="participant_id",
-    columns = "condition",
-    values= "mean_rt_ms"
-)
-print(wide_means)
 
 # Calculate within-participant load effects
-participant_rt_difference = wide_means["high"] - wide_means["low"]
-wide_means["rt_difference"] = participant_rt_difference
-print(wide_means)
-
-mean_load_effect = participant_rt_difference.mean()
+mean_load_effect = paired_differences.mean()
 print("Mean within-participant load effect:", round(mean_load_effect,2), "ms")
 
-sd_load_effect = participant_rt_difference.std()
+sd_load_effect = paired_differences.std()
 print("SD of load effects:", round(sd_load_effect,2), "ms")
 
-sem_load_effect = sd_load_effect / np.sqrt(len(participant_rt_difference))
+sem_load_effect = sd_load_effect / np.sqrt(len(paired_differences))
 print("SEM of load effects:", round(sem_load_effect,2), "ms")
 
-# Perform + print paired-sample t-test data
+# Manually calculate paired t-test stats
 t_statistic = mean_load_effect / sem_load_effect 
 print("t-statistic:", round(t_statistic, 2))
 
-degrees_freedom = len(participant_rt_difference) - 1
+degrees_freedom = len(paired_differences) - 1
 print("Degrees of freedom:", degrees_freedom)
 #manual calculations for verification/learning
 
 p_value = 2*stats.t.sf(abs(t_statistic), degrees_freedom)
 print("p-value:", p_value)
 
-t_test_result = stats.ttest_rel(
-    wide_means["high"],
-    wide_means["low"]
+# Perform paired-samples t-test using SciPy
+paired_t_result = stats.ttest_rel(
+    wide_paired_means["high"],
+    wide_paired_means["low"]
 )
-print("Paired t-test results")
+
+#verifications
+assert np.isclose(t_statistic,paired_t_result.statistic)
+assert np.isclose(p_value,paired_t_result.pvalue)
+
+print("Preprocessed paired t-test:")
 print("-"*21)
-print("t-statistic:", round(t_test_result.statistic, 2))
-print("p-value:", round(t_test_result.pvalue, 3))
-print("Degrees of freedom:", t_test_result.df)
+print("t-statistic:", round(paired_t_result.statistic,3))
+print("p-value:", round(paired_t_result.pvalue,4))
+print("Degrees of freedom:", paired_t_result.df)
+print("Number of participants:", len(wide_paired_means))
+print("Mean cog-load effect:", round(paired_differences.mean(),2), "ms")
 
 # Visualize + save results
-for participant in wide_means.index:
+plt.figure(figsize=(7,5))
+for participant in wide_paired_means.index:
     plt.plot(
         ["low", "high"],
-        [wide_means.loc[participant, "low"],
-         wide_means.loc[participant, "high"],
+        [wide_paired_means.loc[participant, "low"],
+         wide_paired_means.loc[participant, "high"],
         ],
         label=participant,
         marker="o",
@@ -108,8 +227,8 @@ plt.title("Effect of cognitive load on reaction time")
 plt.xlabel("Condition")
 plt.ylabel("Reaction time (ms)")
 plt.legend()
+plt.tight_layout()
 plt.savefig(figure_file, dpi=300)
 plt.show()
-
 
 
