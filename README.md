@@ -49,7 +49,7 @@ results are purely illustrative! the concluded effect was intentionally built in
 -Matplotlib
 
 ## data + academic integrity
-this projects uses independently developed code and synthetic datasets (no confidential research data from my, or other, thesis projects).
+this project uses independently developed code and synthetic datasets (no confidential research data from my, or other, thesis projects).
 
 ## status
 [in progress]
