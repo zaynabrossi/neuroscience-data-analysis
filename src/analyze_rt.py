@@ -212,6 +212,15 @@ print("Degrees of freedom:", paired_t_result.df)
 print("Number of participants:", len(wide_paired_means))
 print("Mean cog-load effect:", round(paired_differences.mean(),2), "ms")
 
+# Calculate effect size + 95% CI
+cohens_dz= mean_load_effect / sd_load_effect
+print("Cohen's dz:", round(cohens_dz,3))
+
+t_critical = stats.t.ppf(0.975, degrees_freedom)
+ci_lower = mean_load_effect - (t_critical)*sem_load_effect
+ci_upper = mean_load_effect + (t_critical)*sem_load_effect
+print("95% CI:", round(ci_lower,2), "to", round(ci_upper,2), "ms")
+
 # Visualize + save results
 plt.figure(figsize=(7,5))
 for participant in wide_paired_means.index:
@@ -232,5 +241,7 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(figure_file, dpi=300)
 plt.show()
+
+
 
 
