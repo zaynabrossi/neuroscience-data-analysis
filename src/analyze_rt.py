@@ -15,12 +15,13 @@ figure_file = figures_folder/"paired_rt_plot.png"
 df = pd.read_csv(csv_file)
 
 # Inspect + report data quality
-print("Number of missing values per column:")
+print("\n=== DATA QUALITY + PREPROCESSING ===")
+print("\nNumber of missing values per column:")
 print("-"*35)
 print(df.isna().sum())
 
 incorrect_trials = df[df["correct"]==0]
-print("Number of incorrect trials:", len(incorrect_trials))
+print("\nNumber of incorrect trials:", len(incorrect_trials))
 
 correct_trials = df[df["correct"]==1]
 print("Number of correct trials:", len(correct_trials))
@@ -32,7 +33,7 @@ accuracy_percentage = (n_correct / total_trials)*100
 print("Accuracy:", round(accuracy_percentage,2), "%")
 
 mean_correct_rt = correct_trials["rt_ms"].mean()
-print(" Raw mean RT on correct trials:", round(mean_correct_rt, 2), "ms")
+print("Raw mean RT on correct trials:", round(mean_correct_rt, 2), "ms")
 
 fast_trials = df[df["rt_ms"] < 200]
 print("Number of unusually fast trials:", len(fast_trials))
@@ -59,32 +60,39 @@ print("Trials retained for analysis:", len(analysis_df))
 
 # Summarize preprocessing quality
 valid_trials_by_condition = working_df.groupby("condition")["valid_rt"].sum()
+print("\nValid RT trials by condition:")
 print(valid_trials_by_condition)
 
 invalid_trials_by_condition = working_df.groupby("condition")["valid_rt"].apply(
     lambda x: (~x).sum())
-print("Invalid trials by condition:", invalid_trials_by_condition)
+print("\nInvalid RT trials by condition:")
+print(invalid_trials_by_condition)
 
 valid_trials_by_participant = working_df.groupby("participant_id")["valid_rt"].sum()
+print("\nValid RT trials by participant:")
 print(valid_trials_by_participant)
 
 valid_trials_by_participant_x_condition= working_df.groupby(
     ["participant_id", "condition"]
 )["valid_rt"].sum()
+print("\nValid RT trials by participant and condition:")
 print(valid_trials_by_participant_x_condition)
 
 mean_rt_by_ptcp_x_cond = clean_df.groupby(
     ["participant_id", "condition"]
 )["rt_ms"].mean()
-print("Mean RT by participant x condition:", round(mean_rt_by_ptcp_x_cond,2), "ms")
+print("\nMean RT by participant x condition:")
+print(round(mean_rt_by_ptcp_x_cond,2), "ms")
 
 
 # Report exclusions for transparency
+print("\n=== REPORTED EXCLUSIONS ===")
+
 n_original= len(working_df)
 n_analysis = len(analysis_df)
 n_removed = n_original - n_analysis
 retention_rate = (n_analysis/n_original)*100
-print("OG trials:", n_original)
+print("\nOG trials:", n_original)
 print("Trials retained:", n_analysis)
 print("Trials removed:", n_removed)
 print("Retention rate:", round(retention_rate,2), "%")
@@ -108,45 +116,50 @@ assert calculated_exclusions == n_removed #double-checking measure
 trials_per_group = analysis_df.groupby(
     ["participant_id", "condition"]
 ).size()
-print(trials_per_group)
 
 trial_count_table = trials_per_group.unstack().reindex(
 index=df["participant_id"].unique(),
     columns=["low", "high"]
 )
-print(trial_count_table)
 
-print(trial_count_table.isna())
 missing_conditions = trial_count_table.isna().sum()
-print(missing_conditions)
 
 missing_per_ptcp= trial_count_table.isna().sum(axis=1)
 eligible_ptcps = missing_per_ptcp[
     missing_per_ptcp == 0
 ]
-print(eligible_ptcps)
 
 eligible_ids = eligible_ptcps.index
-print(eligible_ids)
 
 paired_df = analysis_df[
     analysis_df["participant_id"].isin(eligible_ids)
 ].copy()
 print("Trials from eligible participants:", len(paired_df))
 
+print("\n=== PARTICIPANT-LEVEL SUMMARY ===")
+
+print("\nTrials per participant and condition:")
+print(trial_count_table.to_string())
+
+print("\nNumber of eligible participants:", len(eligible_ids))
+print("Trials from eligible participants:", len(paired_df))
+
 # Calculate ptcp-level cog-load effects
 paired_means = paired_df.groupby(
     ["participant_id", "condition"]
 )["rt_ms"].mean()
-print(paired_means)
 
 wide_paired_means = paired_means.unstack()
-print(wide_paired_means)
 
 paired_differences = wide_paired_means["high"] - wide_paired_means["low"]
-print("Participant-level RT differences:")
+print("\nParticipant-level RT differences:")
 print(paired_differences)
 
+print("\nMean RT by participant and condition in ms:")
+print(wide_paired_means.round(2).to_string())
+
+print("\nWithin-participant RT differences (high - low, ms):")
+print(paired_differences.round(2).to_string())
                                        
 # Calculate + display descriptive stats
 mean_rt = paired_df["rt_ms"].mean()
@@ -161,7 +174,7 @@ mean_low_rt = low_trials["rt_ms"].mean()
 print("Mean low-load RT:", round(mean_low_rt,2), "ms")
 
 overall_rt_difference = mean_high_rt - mean_low_rt
-print("Overall RT difference:", round(overall_rt_difference,2), "ms")
+print("\nOverall RT difference:", round(overall_rt_difference,2), "ms")
 if overall_rt_difference > 0:
     print("High cog load produced slower responses.")
 elif overall_rt_difference < 0:
@@ -170,12 +183,15 @@ else:
     print("No diff in mean reaction time.")
 
 mean_accuracy_by_condition = df.groupby("condition")["correct"].mean()
-print(mean_accuracy_by_condition)
+print("\nAccuracy by condition:")
+print((mean_accuracy_by_condition*100).round(2).to_string())
 
 
 # Calculate within-participant load effects
+print("\n=== DESCRIPTIVE STATS ===")
+
 mean_load_effect = paired_differences.mean()
-print("Mean within-participant load effect:", round(mean_load_effect,2), "ms")
+print("\nMean within-participant load effect:", round(mean_load_effect,2), "ms")
 
 sd_load_effect = paired_differences.std()
 print("SD of load effects:", round(sd_load_effect,2), "ms")
@@ -204,8 +220,8 @@ paired_t_result = stats.ttest_rel(
 assert np.isclose(t_statistic,paired_t_result.statistic)
 assert np.isclose(p_value,paired_t_result.pvalue)
 
-print("Preprocessed paired t-test:")
-print("-"*21)
+print("\nPreprocessed paired t-test:")
+print("-"*27)
 print("t-statistic:", round(paired_t_result.statistic,3))
 print("p-value:", round(paired_t_result.pvalue,4))
 print("Degrees of freedom:", paired_t_result.df)
@@ -240,6 +256,8 @@ plt.ylabel("Reaction time (ms)")
 plt.legend()
 plt.tight_layout()
 plt.savefig(figure_file, dpi=300)
+print("\n=== VISUALIZATION ===")
+print("Paired RT plot saved to:", figure_file)
 plt.show()
 
 
