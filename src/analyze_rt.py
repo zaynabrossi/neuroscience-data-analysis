@@ -61,22 +61,22 @@ print("Trials retained for analysis:", len(analysis_df))
 # Summarize preprocessing quality
 valid_trials_by_condition = working_df.groupby("condition")["valid_rt"].sum()
 print("\nValid RT trials by condition:")
-print(valid_trials_by_condition)
+print((valid_trials_by_condition).to_string())
 
 invalid_trials_by_condition = working_df.groupby("condition")["valid_rt"].apply(
     lambda x: (~x).sum())
 print("\nInvalid RT trials by condition:")
-print(invalid_trials_by_condition)
+print((invalid_trials_by_condition).to_string())
 
 valid_trials_by_participant = working_df.groupby("participant_id")["valid_rt"].sum()
 print("\nValid RT trials by participant:")
-print(valid_trials_by_participant)
+print((valid_trials_by_participant).to_string())
 
 valid_trials_by_participant_x_condition= working_df.groupby(
     ["participant_id", "condition"]
 )["valid_rt"].sum()
 print("\nValid RT trials by participant and condition:")
-print(valid_trials_by_participant_x_condition)
+print((valid_trials_by_participant_x_condition).to_string())
 
 mean_rt_by_ptcp_x_cond = clean_df.groupby(
     ["participant_id", "condition"]
@@ -153,7 +153,7 @@ wide_paired_means = paired_means.unstack()
 
 paired_differences = wide_paired_means["high"] - wide_paired_means["low"]
 print("\nParticipant-level RT differences:")
-print(paired_differences)
+print((paired_differences).to_string())
 
 print("\nMean RT by participant and condition in ms:")
 print(wide_paired_means.round(2).to_string())
@@ -259,6 +259,7 @@ plt.savefig(figure_file, dpi=300)
 print("\n=== VISUALIZATION ===")
 print("Paired RT plot saved to:", figure_file)
 plt.show()
+
 
 
 
